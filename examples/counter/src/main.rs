@@ -1,8 +1,14 @@
+use std::{cell::RefCell, time::Instant};
+
 use iced::{
     button, Alignment, Button, Column, Element, Sandbox, Settings, Text,
 };
 
+thread_local! {
+    static START_TIME: RefCell<Option<Instant>> = RefCell::new(None);
+}
 pub fn main() -> iced::Result {
+    START_TIME.with(|t| *t.borrow_mut() = Some(Instant::now()));
     Counter::run(Settings::default())
 }
 
@@ -42,6 +48,13 @@ impl Sandbox for Counter {
     }
 
     fn view(&mut self) -> Element<Message> {
+        START_TIME.with(|t| {
+            let mut t = t.borrow_mut();
+            if let Some(start_time) = *t {
+                println!("first paint {:?}", start_time.elapsed());
+                *t = None;
+            }
+        });
         Column::new()
             .padding(20)
             .align_items(Alignment::Center)
